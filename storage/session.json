@@ -1,0 +1,162 @@
+{
+    "cookies": "GX_CLIENT_ID=152a28a6-9296-4540-8d7c-0fecb54b1091; GX_SESSION_ID=KIPbraddQimARpuSD0QHphVZDJhZPd9rR2bvbY8kAmQ%3d; GAMSessionGUID=f54b62dc-beb5-4d3f-86b7-19fd0732f3ec; GAMRememberUser=SiacAPW%3boMqed77Zn0j6JNq7v4NEjsbu%2b1mL7l%2bXsyFNNErFrS%2fJ0XeGntRVAs8ADPXNkVneuXUKDmLRhZpbDk9o5yJMO%2f7OjQ07%2bLCIidDIdBD9jpzBuRU2XvlpIxcb8SGVQultScG6RPaEyrlnqjZXF650dg2oIPIyU6f0y3eC2EcrIDQ%3d; ASP.NET_SessionId=ombxjbxceu23gowr0deedktd; GxTZOffset=America/Sao_Paulo",
+    "ajaxSecurityToken": "015CD35A70A3C48159FC0F3CCA72D467829A6D654C8EDB9A036F5E440F0EACA3",
+    "gxAuthToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IiIsImd4LWV4cCI6IjE3ODcwNzQ3MDQuODczMDIiLCJuYmYiOjE3ODU3ODk1MDQsImV4cCI6MTc4NzA4NTUwNCwiaWF0IjoxNzg1Nzg5NTA0fQ.nfxQ1IWz5A1SNBwy8_iO9c3JXCLbGOczhYskesbO4hQ",
+    "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "gxajaxrequest": "1",
+        "referer": "https://clickaplicativos.com.br/ZeroQuinze/Catalogo.aspx",
+        "sec-ch-ua": "\"Chromium\";v=\"151\", \"Not=A?Brand\";v=\"99\"",
+        "sec-ch-ua-mobile": "?0",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+        "ajax_security_token": "015CD35A70A3C48159FC0F3CCA72D467829A6D654C8EDB9A036F5E440F0EACA3",
+        "content-type": "application/json",
+        "x-gxauth-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IiIsImd4LWV4cCI6IjE3ODcwNzQ3MDQuODczMDIiLCJuYmYiOjE3ODU3ODk1MDQsImV4cCI6MTc4NzA4NTUwNCwiaWF0IjoxNzg1Nzg5NTA0fQ.nfxQ1IWz5A1SNBwy8_iO9c3JXCLbGOczhYskesbO4hQ"
+    },
+    "payloadTemplate": {
+        "MPage": false,
+        "cmpCtx": "",
+        "parms": [
+            "0",
+            "0",
+            "10",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            {
+                "Columns": [
+                    {
+                        "C": "ProCodFab",
+                        "V": true,
+                        "D": "Código",
+                        "O": 0,
+                        "G": "",
+                        "F": "L"
+                    },
+                    {
+                        "C": "ProDes",
+                        "V": true,
+                        "D": "Produto",
+                        "O": 1,
+                        "G": "",
+                        "F": ""
+                    },
+                    {
+                        "C": "&branco",
+                        "V": true,
+                        "D": "Preço",
+                        "O": 2,
+                        "G": "",
+                        "F": "L"
+                    },
+                    {
+                        "C": "&brancoestoque",
+                        "V": true,
+                        "D": "Estoque",
+                        "O": 3,
+                        "G": "",
+                        "F": ""
+                    },
+                    {
+                        "C": "FabDes",
+                        "V": true,
+                        "D": "Fabricante",
+                        "O": 4,
+                        "G": "",
+                        "F": ""
+                    },
+                    {
+                        "C": "GruDes",
+                        "V": true,
+                        "D": "Grupo",
+                        "O": 6,
+                        "G": "",
+                        "F": ""
+                    },
+                    {
+                        "C": "ProAplicacaoBusca",
+                        "V": true,
+                        "D": "Aplicação",
+                        "O": 5,
+                        "G": "",
+                        "F": ""
+                    }
+                ]
+            },
+            "2026/08/03 00:00:00",
+            "2026/08/03 00:00:00",
+            "Catalogo",
+            2,
+            {
+                "CliNroPre": 0
+            },
+            0,
+            1,
+            "81cccf51-2228-45d0-9ab9-1bc33eacfb84",
+            "",
+            "AbaBusca",
+            {
+                "UserId": 0,
+                "UserName": "",
+                "MenuModulo": "",
+                "TipoVersao": "",
+                "NomeAba": ""
+            }
+        ],
+        "hsh": [
+            {
+                "hsh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IjIwMjYvMDgvMDMgMDA6MDA6MDAiLCJneC1leHAiOiIxNzg3MDc0NzA0Ljg3MzAyIiwibmJmIjoxNzg1Nzg5NTA0LCJleHAiOjE3ODcwODU1MDQsImlhdCI6MTc4NTc4OTUwNH0.mvoYTm6kqC4NvMXoMtf8IDqu7PI_8dAV-llxGtBk5_Q",
+                "row": ""
+            },
+            {
+                "hsh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IjIwMjYvMDgvMDMgMDA6MDA6MDAiLCJneC1leHAiOiIxNzg3MDc0NzA0Ljg3MzAyIiwibmJmIjoxNzg1Nzg5NTA0LCJleHAiOjE3ODcwODU1MDQsImlhdCI6MTc4NTc4OTUwNH0.mvoYTm6kqC4NvMXoMtf8IDqu7PI_8dAV-llxGtBk5_Q",
+                "row": ""
+            },
+            {
+                "hsh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IkNhdGFsb2dvIiwiZ3gtZXhwIjoiMTc4NzA3NDcwNC44NzMwMiIsIm5iZiI6MTc4NTc4OTUwNCwiZXhwIjoxNzg3MDg1NTA0LCJpYXQiOjE3ODU3ODk1MDR9.KORd9ZprdCHkg7BLFSCCsi4ky6YLD9jMRIXS0GIZT8s",
+                "row": ""
+            },
+            {
+                "hsh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IjIiLCJneC1leHAiOiIxNzg3MDc0NzA0Ljg3MzAyIiwibmJmIjoxNzg1Nzg5NTA0LCJleHAiOjE3ODcwODU1MDQsImlhdCI6MTc4NTc4OTUwNH0.SptXR32KlLOBFrkkJLono1N40yH2t9wlOOpo4TvXBd8",
+                "row": ""
+            },
+            {
+                "hsh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IntcIkNsaU5yb1ByZVwiOjB9IiwiZ3gtZXhwIjoiMTc4NzA3NDcwNC44NzMwMiIsIm5iZiI6MTc4NTc4OTUwNCwiZXhwIjoxNzg3MDg1NTA0LCJpYXQiOjE3ODU3ODk1MDR9.wkxt45VvNQWzNuHoB8s0kn6Qr1_3wigfU1Wrpz-x9_c",
+                "row": ""
+            },
+            {
+                "hsh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IjAsMDAiLCJneC1leHAiOiIxNzg3MDc0NzA0Ljg3MzAyIiwibmJmIjoxNzg1Nzg5NTA0LCJleHAiOjE3ODcwODU1MDQsImlhdCI6MTc4NTc4OTUwNH0.aAKPEc6pzbXtGTkI921DYHVtTBW9O44e-AxJV99M5Ss",
+                "row": ""
+            },
+            {
+                "hsh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IjEiLCJneC1leHAiOiIxNzg3MDc0NzA0Ljg3MzAyIiwibmJmIjoxNzg1Nzg5NTA0LCJleHAiOjE3ODcwODU1MDQsImlhdCI6MTc4NTc4OTUwNH0.T_Ie0JtMZ94ywlgjhTjRYj8r0VkWytBW-fmmOMDTQEU",
+                "row": ""
+            },
+            {
+                "hsh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IjgxY2NjZjUxLTIyMjgtNDVkMC05YWI5LTFiYzMzZWFjZmI4NCIsImd4LWV4cCI6IjE3ODcwNzQ3MDQuODczMDIiLCJuYmYiOjE3ODU3ODk1MDQsImV4cCI6MTc4NzA4NTUwNCwiaWF0IjoxNzg1Nzg5NTA0fQ.FvWdJXS-07QA2zfJiKmNhkP0puR6u2HF56PXWgzCfsI",
+                "row": ""
+            },
+            {
+                "hsh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJneC1pc3N1ZXIiOiIiLCJneC1wZ20iOiJDQVRBTE9HTyIsImd4LXZhbCI6IiIsImd4LWV4cCI6IjE3ODcwNzQ3MDQuODczMDIiLCJuYmYiOjE3ODU3ODk1MDQsImV4cCI6MTc4NzA4NTUwNCwiaWF0IjoxNzg1Nzg5NTA0fQ.nfxQ1IWz5A1SNBwy8_iO9c3JXCLbGOczhYskesbO4hQ",
+                "row": ""
+            }
+        ],
+        "objClass": "catalogo",
+        "pkgName": "GeneXus.Programs",
+        "events": [
+            "GLOBALEVENTS.ATUALIZAUSUARIO",
+            "REFRESH"
+        ],
+        "grids": {
+            "Grid": {
+                "id": 61,
+                "lastRow": 10,
+                "pRow": ""
+            }
+        }
+    }
+}
