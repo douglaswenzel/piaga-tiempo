@@ -6,6 +6,9 @@ import { CatalogClient } from "../catalog/CatalogClient";
 import { Session } from "../models/Session";
 
 export class SessionManager {
+    request(payload: any) {
+        throw new Error("Method not implemented.");
+    }
 
     private readonly file = path.resolve(
         process.cwd(),
