@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/main.ts",
-    "build": "tsc",
-    "start": "node dist/main.js",
-    "test": "vitest",
-    "test:db": "tsx src/tests/test-db.ts"
+    "test": "tsx src/test-diagnostic.ts",
+    "sync": "tsx src/main.ts",
+    "sync:full": "tsx src/main-full.ts",
+    "new:session": "tsx src/force-new-session.ts",
+    "collect:all": "tsx src/collect-all.ts",
   },
   "keywords": [],
   "author": "",
