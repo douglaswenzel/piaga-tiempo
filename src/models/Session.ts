@@ -10,4 +10,8 @@ export interface Session {
 
     payloadTemplate: any;
 
+    gxEvent?: string;
+
+    gxParms?: string[];
+
 }

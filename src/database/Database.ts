@@ -12,6 +12,7 @@ export class CatalogDatabase {
         this.ensureDirectory();
         this.db = new Database(this.dbPath);
         this.createTable();
+        this.createSyncLogTable();
     }
 
     private ensureDirectory(): void {
@@ -43,6 +44,25 @@ export class CatalogDatabase {
         `);
 
         console.log('✅ Tabela products criada/verificada');
+    }
+
+    private createSyncLogTable(): void {
+        this.db.exec(`
+            CREATE TABLE IF NOT EXISTS sync_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_execucao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                tipo TEXT NOT NULL,
+                status TEXT NOT NULL,
+                total_paginas INTEGER,
+                total_produtos INTEGER,
+                produtos_novos INTEGER,
+                produtos_atualizados INTEGER,
+                erro TEXT,
+                detalhes TEXT
+            )
+        `);
+
+        console.log('✅ Tabela sync_log criada/verificada');
     }
 
     upsertProduct(product: CatalogProduct): void {
@@ -176,6 +196,47 @@ export class CatalogDatabase {
         const stmt = this.db.prepare('SELECT COUNT(*) as total FROM products');
         const result = stmt.get() as any;
         return result.total;
+    }
+
+    getLastSync(tipo?: string): any {
+        let query = `
+            SELECT * FROM sync_log 
+            ${tipo ? 'WHERE tipo = ?' : ''}
+            ORDER BY data_execucao DESC 
+            LIMIT 1
+        `;
+
+        const stmt = this.db.prepare(query);
+        return tipo ? stmt.get(tipo) : stmt.get();
+    }
+
+    logSync(data: {
+        tipo: string;
+        status: 'sucesso' | 'falha' | 'parcial';
+        total_paginas?: number;
+        total_produtos?: number;
+        produtos_novos?: number;
+        produtos_atualizados?: number;
+        erro?: string;
+        detalhes?: string;
+    }): void {
+        const stmt = this.db.prepare(`
+            INSERT INTO sync_log (
+                tipo, status, total_paginas, total_produtos,
+                produtos_novos, produtos_atualizados, erro, detalhes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        stmt.run(
+            data.tipo,
+            data.status,
+            data.total_paginas || 0,
+            data.total_produtos || 0,
+            data.produtos_novos || 0,
+            data.produtos_atualizados || 0,
+            data.erro || null,
+            data.detalhes || null
+        );
     }
 
     close(): void {
