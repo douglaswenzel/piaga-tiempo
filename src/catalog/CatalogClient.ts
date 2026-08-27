@@ -15,69 +15,34 @@ export interface PageResult {
 
 export class CatalogClient {
 
-    async search(
-        session: Session,
-        payload: unknown
-    ) {
-        const response = await axios.post(
-            env.CATALOGO_URL,
-            payload,
-            {
-                headers: {
-                    Cookie: session.cookies,
-                    gxajaxrequest: "1",
-                    ajax_security_token: session.ajaxSecurityToken,
-                    "x-gxauth-token": session.gxAuthToken,
-                    "Content-Type": "application/json"
-                }
+    async search(session: Session, url: string, body: any) {
+        const response = await axios.post(url, body, {
+            headers: {
+                Cookie: session.cookies,
+                gxajaxrequest: "1",
+                ajax_security_token: session.ajaxSecurityToken,
+                "x-gxauth-token": session.gxAuthToken,
+                "Content-Type": "application/json"
             }
-        );
-
+        });
         return response.data;
     }
 
-    async ping(session: Session): Promise<void> {
-        const payload = session.payloadTemplate;
-        await this.search(session, payload);
-    }
+    async fetchPage(session: Session, page: number, pageSize: number = 10, searchTerm: string = ''): Promise<PageResult> {
+        const builder = new PayloadBuilder(session.payloadTemplate, session.gxEvent);
+        const { url, body } = builder.buildPaginatedSearch(page, pageSize, searchTerm);
+        const response = await this.search(session, url, body);
 
-    async fetchPage(
-        session: Session,
-        page: number,
-        pageSize: 10 | 20 | 50 = 10,
-        searchTerm: string = "PISTAO"
-    ): Promise<PageResult> {
-        const builder = new PayloadBuilder(session.payloadTemplate);
-        const payload = builder.buildPaginatedSearch(page, pageSize, searchTerm);
-
-        const response = await this.search(session, payload);
-
-        const grid = response?.gxGrids?.[0];
-        if (!grid) {
-            return {
-                products: [],
-                currentPage: page,
-                totalPages: 1,
-                pageSize,
-                hasNext: false,
-                hasPrev: false
-            };
-        }
-
+        // Extrai produtos
         const parser = new CatalogParser();
         const products = parser.parse(response);
 
-        let currentPage = page;
+        // Extrai metadados
         let totalPages = 1;
-
+        let currentPage = page;
         if (response?.gxValues?.[0]) {
-            const values = response.gxValues[0];
-            if (values.AV15GridCurrentPage) {
-                currentPage = parseInt(values.AV15GridCurrentPage, 10);
-            }
-            if (values.AV16GridPageCount) {
-                totalPages = parseInt(values.AV16GridPageCount, 10);
-            }
+            if (response.gxValues[0].AV15GridCurrentPage) currentPage = parseInt(response.gxValues[0].AV15GridCurrentPage, 10);
+            if (response.gxValues[0].AV16GridPageCount) totalPages = parseInt(response.gxValues[0].AV16GridPageCount, 10);
         }
 
         return {
@@ -90,49 +55,9 @@ export class CatalogClient {
         };
     }
 
-    async fetchAllProducts(
-        session: Session,
-        pageSize: 10 | 20 | 50 = 10,
-        searchTerm: string = "PISTAO",
-        delayMs: number = 500
-    ): Promise<any[]> {
-        const allProducts: any[] = [];
-        
-        console.log(`🔄 Iniciando coleta do catálogo (termo: "${searchTerm}")...`);
-        
-        let page = 1;
-        let totalPages = 1;
-        
-        while (page <= totalPages) {
-            console.log(`📄 Coletando página ${page} de ${totalPages}...`);
-            
-            const result = await this.fetchPage(session, page, pageSize, searchTerm);
-            
-            if (page === 1) {
-                totalPages = result.totalPages;
-                console.log(`📊 Total de páginas: ${totalPages}`);
-            }
-            
-            allProducts.push(...result.products);
-            console.log(`✅ Página ${page} carregada: ${result.products.length} produtos (total: ${allProducts.length})`);
-            
-            if (!result.hasNext) {
-                break;
-            }
-            
-            if (page < totalPages) {
-                console.log(`⏳ Aguardando ${delayMs}ms...`);
-                await this.delay(delayMs);
-            }
-            
-            page++;
-        }
-        
-        console.log(`🎉 Coleta finalizada! Total: ${allProducts.length} produtos.`);
-        return allProducts;
-    }
-
-    private delay(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    async ping(session: Session): Promise<void> {
+        const builder = new PayloadBuilder(session.payloadTemplate, session.gxEvent);
+        const { url, body } = builder.buildPaginatedSearch(1, 10, '');
+        await this.search(session, url, body);
     }
 }
