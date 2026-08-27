@@ -1,85 +1,29 @@
+import { env } from "../config/env";
+
 export class PayloadBuilder {
+    private gxEvent: string;
+    private template: any;
 
-    constructor(
-        private readonly template: any
-    ) {}
-
-    build(): any {
-        return structuredClone(this.template);
+    constructor(template: any, gxEvent: string = '') {
+        this.template = template;
+        this.gxEvent = gxEvent;
     }
 
-    searchSku(sku: string): any {
-        const payload = this.build();
-        payload.parms[0] = sku;
-        return payload;
-    }
+    buildPaginatedSearch(page: number, pageSize: number = 10, searchTerm: string = ''): { url: string, body: any } {
+            const payload = JSON.parse(JSON.stringify(this.template));
 
-    searchDescription(description: string): any {
-        const payload = this.build();
-        payload.parms[1] = description;
-        return payload;
-    }
+            if (!payload.parms) payload.parms = [];
 
-    searchManufacturer(manufacturer: string): any {
-        const payload = this.build();
-        payload.parms[3] = manufacturer;
-        return payload;
-    }
+            payload.parms[0] = pageSize;
+            payload.parms[1] = searchTerm;
+            payload.parms[2] = String(page);
 
-    searchGroup(group: string): any {
-        const payload = this.build();
-        payload.parms[4] = group;
-        return payload;
-    }
+            if (!payload.gxValues) payload.gxValues = [{}];
+            payload.gxValues[0].AV15GridCurrentPage = String(page);
 
-    setPageSize(size: 10 | 20 | 50): any {
-        const payload = this.build();
-        payload.parms[2] = size;
-        return payload;
-    }
+            const gxQuery = this.gxEvent ? `${this.gxEvent},` : '';
+            const baseUrl = `env.CATALOGO_URL${gxQuery}gx-no-cache=${Date.now()}`;
 
-    setCurrentPage(page: number): any {
-        const payload = this.build();
-        
-        if (!payload.gxValues || !Array.isArray(payload.gxValues) || payload.gxValues.length === 0) {
-            payload.gxValues = [{}];
+            return { url: baseUrl, body: payload };
         }
-        
-        payload.gxValues[0].AV15GridCurrentPage = String(page);
-        
-        return payload;
-    }
-
-    buildPaginatedSearch(page: number, pageSize: 10 | 20 | 50 = 10, searchTerm: string = "PISTAO"): any {
-        const payload = this.build();
-        
-        payload.parms[1] = searchTerm;
-        payload.parms[2] = pageSize;
-        
-        if (!payload.gxValues || !Array.isArray(payload.gxValues) || payload.gxValues.length === 0) {
-            payload.gxValues = [{}];
-        }
-        payload.gxValues[0].AV15GridCurrentPage = String(page);
-        
-        return payload;
-    }
-
-    
-    setParameter(index: number, value: any): any {
-        const payload = this.build();
-        payload.parms[index] = value;
-        return payload;
-    }
-
-    setGxValues(values: Record<string, any>): any {
-        const payload = this.build();
-        
-        if (!payload.gxValues || !Array.isArray(payload.gxValues) || payload.gxValues.length === 0) {
-            payload.gxValues = [{}];
-        }
-        
-        Object.assign(payload.gxValues[0], values);
-        
-        return payload;
-    }
 }
