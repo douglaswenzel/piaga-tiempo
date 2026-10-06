@@ -247,4 +247,26 @@ export class CatalogDatabase {
     getDb(): Database.Database {
         return this.db;
     }
+
+    getDistinctManufacturers(): string[] {
+    const stmt = this.db.prepare(`
+        SELECT DISTINCT manufacturer 
+        FROM products 
+        WHERE manufacturer IS NOT NULL AND manufacturer != ''
+        ORDER BY manufacturer
+    `);
+    const rows = stmt.all() as { manufacturer: string }[];
+    return rows.map(r => r.manufacturer);
+}
+
+    getDistinctGroups(): string[] {
+        const stmt = this.db.prepare(`
+            SELECT DISTINCT group_name 
+            FROM products 
+            WHERE group_name IS NOT NULL AND group_name != ''
+            ORDER BY group_name
+        `);
+        const rows = stmt.all() as { group_name: string }[];
+        return rows.map(r => r.group_name);
+    }
 }
