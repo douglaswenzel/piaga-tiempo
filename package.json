@@ -8,7 +8,7 @@
     "sync": "tsx src/main.ts",
     "sync:full": "tsx src/main-full.ts",
     "new:session": "tsx src/force-new-session.ts",
-    "collect:all": "tsx src/collect-all.ts",
+    "collect:all": "tsx src/collect-playwright.ts"
   },
   "keywords": [],
   "author": "",
