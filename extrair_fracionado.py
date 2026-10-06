@@ -1,13 +1,22 @@
-import sqlite3
-import pandas as pd
 import os
 from datetime import datetime
 
+import pandas as pd
+import psycopg
+from dotenv import load_dotenv
+
 # ===============================
-# CONFIGURAÇÕES
+# CARREGA VARIÁVEIS DE AMBIENTE
 # ===============================
-DB_PATH = 'data/catalog.db'      # caminho do banco
-OUT_DIR = 'output'               # pasta raiz de saída
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL não encontrada. Verifique se o .env está na raiz do projeto."
+    )
+
+OUT_DIR = 'output'  # pasta raiz de saída
 
 # ===============================
 # FUNÇÃO PARA NOME DA PASTA DO DIA
@@ -30,21 +39,19 @@ pasta_estoque = os.path.join(pasta_dia, 'estoque')
 os.makedirs(pasta_produto, exist_ok=True)
 os.makedirs(pasta_estoque, exist_ok=True)
 
-# Arquivo de log na pasta do dia
 LOG_FILE = os.path.join(pasta_dia, 'log_extracao_todos.txt')
-
-# Abre o arquivo de log
 log_f = open(LOG_FILE, 'w', encoding='utf-8')
 log_f.write(f"===== LOG DE EXTRAÇÃO - {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} =====\n\n")
 
 # ===============================
-# 1. Conectar ao banco e buscar TODOS os produtos
+# 1. Conectar ao Neon e buscar TODOS os produtos
 # ===============================
-conn = sqlite3.connect(DB_PATH)
-cursor = conn.cursor()
-cursor.execute("SELECT sku, description, manufacturer, group_name, price, stock FROM products")
-all_products = cursor.fetchall()
-conn.close()
+with psycopg.connect(DATABASE_URL) as conn:
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "SELECT sku, description, manufacturer, group_name, price, stock FROM products"
+        )
+        all_products = cursor.fetchall()
 
 print(f"Total de produtos no banco: {len(all_products)}")
 log_f.write(f"Total de produtos no banco: {len(all_products)}\n\n")
@@ -52,10 +59,13 @@ log_f.write(f"Total de produtos no banco: {len(all_products)}\n\n")
 # ===============================
 # 2. DataFrame base
 # ===============================
-df_encontrados = pd.DataFrame(all_products, columns=['sku', 'description', 'manufacturer', 'group_name', 'price', 'stock'])
+df_encontrados = pd.DataFrame(
+    all_products,
+    columns=['sku', 'description', 'manufacturer', 'group_name', 'price', 'stock']
+)
 
 # ===============================
-# 3. Gerar Arquivos de Movimentação de Estoque (fracionados)
+# 3. Movimentação de Estoque (fracionado)
 # ===============================
 df_estoque = pd.DataFrame()
 df_estoque['ID Produto'] = ''
@@ -69,7 +79,6 @@ df_estoque['Preço de Compra*'] = df_encontrados['price']
 df_estoque['Preço de Custo'] = df_encontrados['price']
 df_estoque['Observação'] = ''
 
-# Fracionar em blocos de 1000
 chunk_size = 1000
 total_estoque = len(df_estoque)
 for i in range(0, total_estoque, chunk_size):
@@ -83,7 +92,7 @@ for i in range(0, total_estoque, chunk_size):
     log_f.write(msg + "\n")
 
 # ===============================
-# 4. Gerar Arquivos de Cadastro de Produto (fracionados)
+# 4. Cadastro de Produto (fracionado)
 # ===============================
 colunas_produtos = [
     'ID', 'Código', 'Descrição', 'Unidade', 'NCM', 'Origem', 'Preço',

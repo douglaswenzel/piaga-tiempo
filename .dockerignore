@@ -8,3 +8,5 @@ data
 .vscode
 .idea
 coverage
+.neon
+output

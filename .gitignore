@@ -2,3 +2,4 @@ node_modules/
 storage/session.json
 output/
 .env
+.neon

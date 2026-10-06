@@ -2,7 +2,20 @@ import { chromium, type Page } from "playwright";
 import { env } from "./config/env";
 import { CatalogDatabase } from "./database/Database";
 import { CatalogParser } from "./catalog/CatalogParser";
+import type { CatalogProduct } from "./models/CatalogProduct";
+import type { Product } from "./database/Database"
 
+
+function toDbProduct(p: CatalogProduct): Product {
+    return {
+        sku: p.sku,
+        description: p.description,
+        manufacturer: p.manufacturer,
+        group_name: p.group,   // ← único campo que muda de nome
+        price: p.price,
+        stock: p.stock,
+    };
+}
 
 async function closeAnnouncementPopup(page: Page) {
     const selectors = [
@@ -40,11 +53,11 @@ async function closeAnnouncementPopup(page: Page) {
 
 async function collectAllWithPlaywright() {
     console.log("🚀 Coleta via Playwright...");
-    
+
     const browser = await chromium.launch({
         headless: env.HEADLESS,
         slowMo: env.HEADLESS ? 0 : 100,
-    })
+    });
     const context = await browser.newContext();
     const page = await context.newPage();
 
@@ -77,15 +90,17 @@ async function collectAllWithPlaywright() {
 
     await closeAnnouncementPopup(page);
 
-
     const db = new CatalogDatabase();
-    const totalAntes = db.countProducts();
+
+    // 👇 await — agora é assíncrono (Neon)
+    const totalAntes = await db.countProducts();
     console.log(`📊 Produtos no banco ANTES: ${totalAntes}`);
 
     const parser = new CatalogParser();
     const firstProducts = parser.parse(firstPageData);
     if (firstProducts.length > 0) {
-        const { inserted, updated } = db.upsertProducts(firstProducts);
+        // 👇 await — upsert em transação HTTP
+        const { inserted, updated } = await db.upsertProducts(firstProducts.map(toDbProduct));
         console.log(`✅ Página 1: ${firstProducts.length} produtos (novos: ${inserted}, atualizados: ${updated})`);
     }
 
@@ -130,7 +145,8 @@ async function collectAllWithPlaywright() {
             break;
         }
 
-        const { inserted, updated } = db.upsertProducts(products);
+        // 👇 await — upsert em transação HTTP
+        const { inserted, updated } = await db.upsertProducts(products.map(toDbProduct));
         totalColetados += products.length;
         pagina++;
         console.log(`✅ Página ${pagina}: ${products.length} produtos (novos: ${inserted}, atualizados: ${updated})`);
@@ -138,7 +154,8 @@ async function collectAllWithPlaywright() {
         await page.waitForTimeout(300);
     }
 
-    const totalFinal = db.countProducts();
+    // 👇 await — agora é assíncrono (Neon)
+    const totalFinal = await db.countProducts();
     console.log("\n📊 RESUMO FINAL");
     console.log("=".repeat(60));
     console.log(`  Antes:   ${totalAntes}`);
@@ -147,7 +164,8 @@ async function collectAllWithPlaywright() {
     console.log(`  Coletados: ${totalColetados}`);
     console.log("=".repeat(60));
 
-    db.close();
+    // 👇 await — no-op com driver HTTP, mas mantém a interface consistente
+    await db.close();
     await browser.close();
 }
 
