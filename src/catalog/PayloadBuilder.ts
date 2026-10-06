@@ -9,21 +9,19 @@ export class PayloadBuilder {
         this.gxEvent = gxEvent;
     }
 
-    buildPaginatedSearch(page: number, pageSize: number = 10, searchTerm: string = ''): { url: string, body: any } {
-            const payload = JSON.parse(JSON.stringify(this.template));
+    buildPaginatedSearch(page: number, pageSize: number = 10, searchTerm: string = '0'): { url: string, body: any } {
+        const payload = JSON.parse(JSON.stringify(this.template));
+        if (!payload.parms) payload.parms = [];
 
-            if (!payload.parms) payload.parms = [];
+        // Ajustes para paginação (apenas esses 3 campos)
+        payload.parms[0] = String(pageSize);
+        payload.parms[1] = searchTerm;
+        payload.parms[19] = String(page);
 
-            payload.parms[0] = pageSize;
-            payload.parms[1] = searchTerm;
-            payload.parms[2] = String(page);
+        // ✅ URL CORRETA
+        const gxQuery = this.gxEvent ? `${this.gxEvent},` : '';
+        const baseUrl = `${env.CATALOGO_URL}?${gxQuery}gx-no-cache=${Date.now()}`;
 
-            if (!payload.gxValues) payload.gxValues = [{}];
-            payload.gxValues[0].AV15GridCurrentPage = String(page);
-
-            const gxQuery = this.gxEvent ? `${this.gxEvent},` : '';
-            const baseUrl = `env.CATALOGO_URL${gxQuery}gx-no-cache=${Date.now()}`;
-
-            return { url: baseUrl, body: payload };
-        }
+        return { url: baseUrl, body: payload };
+    }
 }
