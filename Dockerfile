@@ -20,4 +20,3 @@ RUN mkdir -p /app/output \
 USER pwuser
 
 CMD ["npx", "tsx", "src/collect-playwright.ts"]
-```
