@@ -1,17 +1,35 @@
+
 FROM mcr.microsoft.com/playwright:v1.62.0-jammy
+
+USER root
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       python3 python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /opt/venv
+
+ENV PATH="/opt/venv/bin:${PATH}" \
+    NODE_ENV=production \
+    HEADLESS=true \
+    TZ=America/Sao_Paulo \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-ENV NODE_ENV=production \
-    HEADLESS=true \
-    TZ=America/Sao_Paulo
-
 COPY package*.json ./
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN chown -R pwuser:pwuser /app
+RUN mkdir -p /app/output \
+    && chown -R pwuser:pwuser /app /opt/venv
+
 USER pwuser
 
-CMD ["npx", "tsx", "src/collect-playwright.ts"]
+CMD ["bash", "scripts/run-pipeline.sh"]
