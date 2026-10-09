@@ -1,5 +1,5 @@
 
-name: PIAGA Motors - Extração e Exportação
+name: PIAGA Motors - Extração de Catálogo
 
 on:
   schedule:
@@ -11,13 +11,14 @@ on:
 permissions:
   contents: read
 
-# Evita duas extrações simultâneas alterarem o mesmo catálogo.
+# Evita execuções simultâneas alterando o catálogo.
 concurrency:
   group: piaga-catalogo-producao
   cancel-in-progress: false
 
 jobs:
   pipeline:
+    name: Extrair catálogo e salvar no Neon
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -31,32 +32,22 @@ jobs:
           CATALOGO_URL: ${{ secrets.CATALOGO_URL }}
           EMAIL: ${{ secrets.CATALOGO_EMAIL }}
           SENHA: ${{ secrets.CATALOGO_SENHA }}
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET: ${{ secrets.R2_BUCKET }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: |
           set -eu
-          for name in \
-            DATABASE_URL CATALOGO_URL EMAIL SENHA \
-            R2_ACCOUNT_ID R2_ACCESS_KEY_ID \
-            R2_SECRET_ACCESS_KEY R2_BUCKET \
-            RESEND_API_KEY EMAIL_FROM EMAIL_TO
-          do
+
+          for name in DATABASE_URL CATALOGO_URL EMAIL SENHA; do
             if [ -z "$(printenv "$name")" ]; then
               echo "::error::Secret ausente: $name"
               exit 1
             fi
           done
-          echo "Configuração obrigatória presente."
 
-      - name: Construir imagem
+          echo "Configuração mínima validada."
+
+      - name: Construir imagem Docker
         run: docker build -t piaga-catalogo:latest .
 
-      - name: Executar pipeline completo
+      - name: Executar extração
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CATALOGO_URL: ${{ secrets.CATALOGO_URL }}
@@ -64,37 +55,12 @@ jobs:
           SENHA: ${{ secrets.CATALOGO_SENHA }}
           HEADLESS: "true"
           TZ: America/Sao_Paulo
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET: ${{ secrets.R2_BUCKET }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: |
-          mkdir -p output
           docker run --rm \
-            --env DATABASE_URL \
-            --env CATALOGO_URL \
-            --env EMAIL \
-            --env SENHA \
-            --env HEADLESS \
-            --env TZ \
-            --env R2_ACCOUNT_ID \
-            --env R2_ACCESS_KEY_ID \
-            --env R2_SECRET_ACCESS_KEY \
-            --env R2_BUCKET \
-            --env RESEND_API_KEY \
-            --env EMAIL_FROM \
-            --env EMAIL_TO \
-            --volume "$GITHUB_WORKSPACE/output:/app/output" \
+            -e DATABASE_URL \
+            -e CATALOGO_URL \
+            -e EMAIL \
+            -e SENHA \
+            -e HEADLESS \
+            -e TZ \
             piaga-catalogo:latest
-
-      - name: Guardar logs e arquivos para diagnóstico
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: piaga-diagnostico-${{ github.run_id }}
-          path: output/
-          if-no-files-found: ignore
-          retention-days: 3
