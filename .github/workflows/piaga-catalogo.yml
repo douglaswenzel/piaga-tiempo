@@ -3,7 +3,13 @@ name: PIAGA Motors - Extração de Catálogo
 
 on:
   schedule:
-    - cron: "0 0,3,6,9,12,15,18,21 * * *"
+    - cron: "0 11 * * *"
+      timezone: "America/Sao_Paulo"
+
+    - cron: "30 15 * * *"
+      timezone: "America/Sao_Paulo"
+
+    - cron: "0 18 * * *"
       timezone: "America/Sao_Paulo"
 
   workflow_dispatch:
