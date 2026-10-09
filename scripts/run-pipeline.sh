@@ -2,22 +2,17 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-echo "=================================================="
-echo "PIAGA MOTORS — PIPELINE AUTOMATIZADO"
-echo "Início: $(date -Is)"
-echo "=================================================="
+echo "========================================"
+echo "PIAGA Motors - Iniciando extração"
+echo "========================================"
 
-: "${DATABASE_URL:?DATABASE_URL não configurada}"
-: "${CATALOGO_URL:?CATALOGO_URL não configurada}"
-: "${EMAIL:?EMAIL não configurado}"
-: "${SENHA:?SENHA não configurada}"
+: "${DATABASE_URL:?Secret DATABASE_URL não configurada}"
+: "${CATALOGO_URL:?Secret CATALOGO_URL não configurada}"
+: "${CATALOGO_EMAIL:?Secret CATALOGO_EMAIL não configurada}"
+: "${CATALOGO_SENHA:?Secret CATALOGO_SENHA não configurada}"
 
-# 1. Atualizar o catálogo no Neon
-echo "[1/2] Iniciando extrator Playwright..."
 npx tsx src/collect-playwright.ts
 
-# 2. Fracionar, armazenar e enviar os arquivos
-echo "[2/2] Iniciando fracionador e entrega..."
-python scripts/export_products.py
-
-echo "Pipeline concluído: $(date -Is)"
+echo "========================================"
+echo "Extração concluída com sucesso"
+echo "========================================"
