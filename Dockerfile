@@ -1,4 +1,3 @@
-```dockerfile
 FROM mcr.microsoft.com/playwright:v1.62.0-jammy
 
 USER root
