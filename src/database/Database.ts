@@ -11,6 +11,29 @@ export interface Product {
 }
 
 export class CatalogDatabase {
+
+    async testConnection(): Promise<void> {
+        const startedAt = Date.now();
+
+        console.log("🔌 [NEON] Executando SELECT 1...");
+
+        try {
+            const result = await this.sql`SELECT 1 AS connected`;
+
+            console.log("✅ [NEON] Teste de conexão concluído.");
+            console.log(`📡 Resposta: ${JSON.stringify(result)}`);
+            console.log(`⏱️ Duração: ${Date.now() - startedAt} ms`);
+        } catch (error: unknown) {
+            console.error("❌ [NEON] Teste de conexão falhou.");
+
+            if (error instanceof Error) {
+                console.error(`Tipo: ${error.name}`);
+                console.error(`Mensagem: ${error.message}`);
+            }
+
+            throw error;
+        }
+    }
     private sql;
 
     constructor() {
