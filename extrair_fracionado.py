@@ -199,7 +199,38 @@ def main() -> None:
                 FROM products ORDER BY sku
             ''')
             rows = cursor.fetchall()
-    df = validate(pd.DataFrame(rows, columns=['sku', 'description', 'manufacturer', 'group_name', 'price', 'stock']))
+
+
+    df = pd.DataFrame(
+        rows,
+        columns=[
+            'sku', 'description', 'manufacturer',
+            'group_name', 'price', 'stock'
+        ]
+    )
+
+    sku = df['sku'].astype('string').str.strip()
+
+    invalidos = (
+        sku.isna()
+        | sku.eq('')
+        | sku.str.lower().isin(['nan', 'none', 'null'])
+    ).fillna(True)
+
+    print(f"Produtos extraídos: {len(df)}")
+    print(f"Produtos sem SKU: {invalidos.sum()}")
+
+    if invalidos.any():
+        print("Registros com SKU inválido:")
+        print(
+            df.loc[invalidos, [
+                'sku', 'description', 'manufacturer',
+                'group_name'
+            ]].head(20).to_string()
+        )
+
+    df = validate(df)
+
     print(f'Neon: {len(df)} produtos para exportação.', flush=True)
 
     stock_files = write_parts(build_stock(df), stock_dir, 'estoque_todos')
