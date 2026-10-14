@@ -314,28 +314,22 @@ async function collectAllWithPlaywright(): Promise<void> {
         // 6. Paginação
         // ----------------------------------------------------
 
+        const PAGE_SIZE = 10;
+
         while (true) {
-            const nextButton = page
-                .locator("li.next a")
-                .first();
+            const nextButton = page.locator("li.next a").first();
 
             if ((await nextButton.count()) === 0) {
-                console.log(
-                    "🏁 Botão de próxima página não encontrado. Fim da coleta."
-                );
+                console.log("🏁 Botão 'próxima' não encontrado. Fim da coleta.");
                 break;
             }
 
             if (!(await nextButton.isVisible())) {
-                console.log(
-                    "🏁 Botão de próxima página não está visível."
-                );
+                console.log("🏁 Botão 'próxima' não visível. Fim da coleta.");
                 break;
             }
 
-            console.log(
-                `\n🔎 Solicitando página ${pagina + 1}...`
-            );
+            console.log(`\n🔎 Solicitando página ${pagina + 1}...`);
 
             const responsePromise = page.waitForResponse(
                 async (response) => {
@@ -362,31 +356,52 @@ async function collectAllWithPlaywright(): Promise<void> {
 
             await nextButton.click();
 
-            const response = await responsePromise;
+            // ----------------------------------------------------
+            // 🆕 Tolera timeout: se a resposta não vier, é porque
+            // não havia próxima página (botão órfão no DOM).
+            // ----------------------------------------------------
+            let response;
+            try {
+                response = await responsePromise;
+            } catch (error: unknown) {
+                if (error instanceof Error && error.name === "TimeoutError") {
+                    console.log(
+                        "🏁 Timeout aguardando resposta — assumindo fim da paginação."
+                    );
+                    break;
+                }
+                throw error;
+            }
+
             const data = await response.json();
             const products = parser.parse(data);
 
             if (products.length === 0) {
-                console.log(
-                    "🏁 Página sem produtos. Fim da coleta."
-                );
+                console.log("🏁 Página sem produtos. Fim da coleta.");
                 break;
             }
 
             pagina++;
             totalColetados += products.length;
 
-            const result = await saveProducts(
-                db,
-                products,
-                pagina
-            );
+            const result = await saveProducts(db, products, pagina);
 
             totalInseridos += result.inserted;
             totalAtualizados += result.updated;
 
+            // ----------------------------------------------------
+            // 🆕 Última página detectada: menos itens que o esperado
+            // ----------------------------------------------------
+            if (products.length < PAGE_SIZE) {
+                console.log(
+                    `🏁 Última página detectada (${products.length} < ${PAGE_SIZE}). Fim da coleta.`
+                );
+                break;
+            }
+
             await page.waitForTimeout(300);
         }
+
 
         // ----------------------------------------------------
         // 7. Confere resultado no banco
