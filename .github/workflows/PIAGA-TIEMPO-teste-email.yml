@@ -1,0 +1,119 @@
+name: PIAGA-TIEMPO - Teste de e-mail da Function
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  teste-controlado:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Autenticar no Azure (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Preparar ZIP ficticio e manifesto de integridade
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+
+          execution = f'teste-{os.environ["GITHUB_RUN_ID"]}-{os.environ["GITHUB_RUN_ATTEMPT"]}'
+          prefix = f'piaga-tiempo/testes/{execution}'
+          folder = Path('teste-email')
+          folder.mkdir(exist_ok=False)
+          archive = folder / 'relatorio_completo.zip'
+
+          with ZipFile(archive, 'w', compression=ZIP_DEFLATED) as zf:
+              zf.writestr('LEIA-ME.txt',
+                          'PIAGA-TIEMPO: teste controlado do e-mail.\n'
+                          'Este arquivo NAO contem dados de produtos.\n')
+
+          zip_data = archive.read_bytes()
+          digest = hashlib.sha256(zip_data).hexdigest()
+          manifest = {
+              'project': 'PIAGA-TIEMPO',
+              'execution_id': execution,
+              'products': 0,
+              'excel_files': 0,
+              'zip_bytes': len(zip_data),
+              'zip_sha256': digest,
+              'status': 'complete',
+          }
+          (folder / 'manifesto.json').write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8'
+          )
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as stream:
+              stream.write(f'PIAGA_TEST_EXECUTION={execution}\n')
+              stream.write(f'PIAGA_TEST_PREFIX={prefix}\n')
+              stream.write(f'PIAGA_TEST_SHA256={digest}\n')
+          print(f'Teste preparado: {execution} (ZIP: {len(zip_data)} bytes)')
+          PY
+
+      - name: Enviar ZIP e manifesto para Blob privado
+        shell: bash
+        env:
+          STORAGE_ACCOUNT: ${{ vars.AZURE_STORAGE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          az storage blob upload \
+            --account-name "$STORAGE_ACCOUNT" --auth-mode login \
+            --container-name relatorios \
+            --name "$PIAGA_TEST_PREFIX/relatorio_completo.zip" \
+            --file teste-email/relatorio_completo.zip \
+            --content-type application/zip \
+            --metadata "sha256=$PIAGA_TEST_SHA256" \
+            --overwrite false --no-progress --only-show-errors -o none
+
+          az storage blob upload \
+            --account-name "$STORAGE_ACCOUNT" --auth-mode login \
+            --container-name relatorios \
+            --name "$PIAGA_TEST_PREFIX/manifesto.json" \
+            --file teste-email/manifesto.json \
+            --content-type application/json \
+            --overwrite false --no-progress --only-show-errors -o none
+
+          echo "ZIP e manifesto publicados: relatorios/$PIAGA_TEST_PREFIX/"
+
+      - name: Notificar a fila uma unica vez
+        shell: bash
+        env:
+          STORAGE_ACCOUNT: ${{ vars.AZURE_STORAGE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          BASE64_MESSAGE="$(python3 - <<'PY'
+          import base64
+          import json
+          import os
+
+          prefix = os.environ['PIAGA_TEST_PREFIX']
+          message = {
+              'execution_id': os.environ['PIAGA_TEST_EXECUTION'],
+              'container': 'relatorios',
+              'zip_blob': f'{prefix}/relatorio_completo.zip',
+              'manifest_blob': f'{prefix}/manifesto.json',
+          }
+          print(base64.b64encode(json.dumps(message).encode('utf-8')).decode('ascii'))
+          PY
+          )"
+
+          az storage message put \
+            --account-name "$STORAGE_ACCOUNT" --auth-mode login \
+            --queue-name relatorios-prontos \
+            --content "$BASE64_MESSAGE" --time-to-live 3600 \
+            --only-show-errors -o none
+
+          echo "Mensagem publicada na fila: $PIAGA_TEST_EXECUTION"
+          echo 'Aguardar a Azure Function; sucesso deste workflow nao confirma entrega do e-mail.'
