@@ -1,0 +1,4 @@
+azure-functions>=1.21,<2
+azure-identity>=1.20,<2
+azure-storage-blob>=12.24,<13
+azure-communication-email>=1.0,<2

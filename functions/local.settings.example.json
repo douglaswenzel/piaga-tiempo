@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "PIAGA_STORAGE_ACCOUNT": "NOME_STORAGE_ACCOUNT",
+    "PIAGA_REPORT_CONTAINER": "relatorios",
+    "PIAGA_REPORT_RECIPIENT": "destinatario@exemplo.com",
+    "PIAGA_REPORT_SENDER": "donotreply@DOMINIO_VERIFICADO.azurecomm.net",
+    "PIAGA_ACS_ENDPOINT": "https://acs-piaga-tiempo-XXXX.communication.azure.com",
+    "PIAGA_SAS_HOURS": "24"
+  }
+}
