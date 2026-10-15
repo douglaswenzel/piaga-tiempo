@@ -47,7 +47,32 @@ def validate(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         raise RuntimeError("Nenhum produto retornado pelo Neon; relatório cancelado.")
     if df["sku"].isna().any() or df["sku"].astype(str).str.strip().eq("").any():
-        raise RuntimeError("Produtos com SKU vazio ou nulo.")
+                # Ignorar somente na exportação produtos sem SKU.
+        invalid_mask = (
+            df["sku"].isna()
+            | df["sku"].astype(str).str.strip().eq("")
+        )
+
+        skipped = int(invalid_mask.sum())
+
+        print(
+            f"AVISO: {skipped} produto(s) sem SKU ignorado(s) nesta exportação.",
+            flush=True,
+        )
+
+        # Proteção contra problemas maiores de qualidade de dados.
+        if skipped > 5:
+            raise RuntimeError(
+                f"{skipped} produtos sem SKU encontrados. "
+                "Limite de segurança: 5."
+            )
+
+        df = df.loc[~invalid_mask].copy().reset_index(drop=True)
+
+        if df.empty:
+            raise RuntimeError(
+                "Nenhum produto com SKU válido para exportação."
+            )
     if df["sku"].duplicated().any():
         raise RuntimeError("Neon retornou SKUs duplicados.")
     if df["description"].isna().any() or df["description"].astype(str).str.strip().eq("").any():
