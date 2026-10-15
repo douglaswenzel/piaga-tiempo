@@ -1,0 +1,108 @@
+name: PIAGA-TIEMPO - Recuperar e enviar relatorio (sem Playwright)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: 'Execucao anterior que gerou o ZIP; se artifact nao existir, usa o Neon sem executar Playwright'
+        required: true
+        type: string
+        default: '38657693067'
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+# Mesma trava do pipeline de producao: nao sobrepor execucoes.
+concurrency:
+  group: piaga-catalogo-producao
+  cancel-in-progress: false
+
+jobs:
+  recuperar:
+    name: Recuperar ZIP e entregar no Azure
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TZ: America/Sao_Paulo
+      PIAGA_AZURE_STORAGE_ACCOUNT: ${{ vars.AZURE_STORAGE_ACCOUNT }}
+      PIAGA_AZURE_CONTAINER: relatorios
+      PIAGA_AZURE_QUEUE: relatorios-prontos
+
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Procurar ZIP preservado na execucao anterior
+        id: origem
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ inputs.source_run_id }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$SOURCE_RUN" =~ ^[0-9]+$ ]]; then
+            echo '::error::source_run_id deve ser numerico.'
+            exit 1
+          fi
+          artifact_name="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN}/artifacts" \
+            --jq '[.artifacts[] | select(.expired == false and (.name | startswith("relatorio-piaga-tiempo-")))] | sort_by(.created_at) | last | .name // ""')"
+          if [[ -n "$artifact_name" ]]; then
+            echo "Artifact preservado encontrado: $artifact_name"
+            mkdir -p recuperado
+            gh run download "$SOURCE_RUN" --name "$artifact_name" --dir recuperado
+            n="$(find recuperado -type f -name relatorio_completo.zip | wc -l)"
+            if [[ "$n" -ne 1 ]]; then
+              echo "::error::Artifact deve ter exatamente um relatorio_completo.zip; encontrados $n"
+              exit 1
+            fi
+            echo 'modo=artifact' >> "$GITHUB_OUTPUT"
+          else
+            echo '::notice::Nenhum artifact ZIP preservado nessa execucao. Geraremos SOMENTE planilhas do Neon; Playwright nao sera executado.'
+            echo 'modo=neon' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Instalar bibliotecas
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Gerar ZIP a partir do Neon (sem coleta do fornecedor)
+        if: ${{ steps.origem.outputs.modo == 'neon' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AZURE_PUBLISH_ENABLED: 'false'
+        run: |
+          set -euo pipefail
+          python extrair_fracionado.py
+
+      # Autenticacao OIDC so depois de ZIP existente/gerado.
+      - name: Autenticar no Azure imediatamente antes da publicacao
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Publicar ZIP e manifesto e notificar a Azure Function
+        env:
+          PIAGA_ORIGEM: ${{ steps.origem.outputs.modo }}
+        run: python publicar_relatorio_salvo.py
+
+      # A partir de agora toda tentativa preserva o ZIP, mesmo quando a publicacao falhar.
+      - name: Preservar ZIP para possivel nova tentativa
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-piaga-tiempo-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            output/**/relatorio_completo.zip
+            recuperado/**/relatorio_completo.zip
+          if-no-files-found: warn
+          retention-days: 7
