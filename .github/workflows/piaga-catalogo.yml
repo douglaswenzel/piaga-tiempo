@@ -2,7 +2,6 @@ name: PIAGA-TIEMPO - Extracao Neon e Relatorios Azure
 
 on:
   schedule:
-    # Horários do ultimo workflow informado por Douglas, fuso de São Paulo.
     - cron: "0 11 * * *"
       timezone: "America/Sao_Paulo"
     - cron: "30 15 * * *"
@@ -47,8 +46,8 @@ jobs:
           echo "Owner ID: ${{ github.repository_owner_id }}"
           echo "Repo ID: ${{ github.repository_id }}"
 
-      - name: Autenticar Azure via OIDC
-        if: ${{ inputs.azure_test_only == true || vars.AZURE_PUBLISH_ENABLED == 'true' }}
+      - name: Autenticar Azure apenas no teste isolado
+        if: ${{ inputs.azure_test_only == true }}
         uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -121,18 +120,39 @@ jobs:
         if: ${{ inputs.azure_test_only != true }}
         run: python -m pip install --disable-pip-version-check -r requirements.txt
 
-      - name: Gerar ZIP e publicar no Azure, se habilitado
+      - name: Gerar as planilhas e o ZIP sem publicar
         if: ${{ inputs.azure_test_only != true }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          AZURE_PUBLISH_ENABLED: ${{ vars.AZURE_PUBLISH_ENABLED }}
+          AZURE_PUBLISH_ENABLED: 'false'
         run: python extrair_fracionado.py
 
-      - name: Preservar ZIP nos artifacts do GitHub em fase de teste
-        if: ${{ inputs.azure_test_only != true && vars.AZURE_PUBLISH_ENABLED != 'true' }}
+      # Guardar os relatórios ANTES da tentativa de entrega Azure, de modo que
+      # uma eventual falha de login/upload não provoque nova coleta do catálogo.
+      - name: Preservar ZIP antes de publicar no Azure
+        if: ${{ inputs.azure_test_only != true }}
         uses: actions/upload-artifact@v4
         with:
-          name: relatorio-piaga-tiempo-${{ github.run_id }}
-          path: output/**/*.zip
+          name: relatorio-piaga-tiempo-${{ github.run_id }}-${{ github.run_attempt }}
+          path: output/**/relatorio_completo.zip
           if-no-files-found: error
-          retention-days: 3
+          retention-days: 7
+
+      - name: Renovar login Azure OIDC apos gerar o ZIP
+        if: ${{ inputs.azure_test_only != true && vars.AZURE_PUBLISH_ENABLED == 'true' }}
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Reutiliza o publicador comprovado pelo workflow de recuperacao.
+      - name: Publicar ZIP pronto no Blob e notificar a fila
+        if: ${{ inputs.azure_test_only != true && vars.AZURE_PUBLISH_ENABLED == 'true' }}
+        env:
+          PIAGA_ORIGEM: 'neon'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f publicar_relatorio_salvo.py || { echo '::error::publicar_relatorio_salvo.py ausente na raiz'; exit 1; }
+          python publicar_relatorio_salvo.py
